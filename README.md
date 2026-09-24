@@ -36,9 +36,10 @@ Two constraints shaped the implementation, both worth preserving:
 - **It styles a real element, not a pseudo-element.** Chrome does not reliably
   hit-test generated content, so `:hover` never fires on a `::after` badge and
   it can never go opaque.
-- **The wordmark is embedded as a `data:` URI.** The consuming application sends
-  a `Content-Security-Policy` whose `img-src` is `'self' data:`, so an
-  externally hosted image is blocked by the browser. The logo is recoloured to
+- **The mark is embedded as a `data:` URI.** The consuming application sends a
+  `Content-Security-Policy` whose `img-src` is `'self' data:`, so an externally
+  hosted image is blocked by the browser. The brand favicon is cropped to its
+  own bounding box, since the source file is mostly padding, and recoloured to
   white with `fill` attributes rather than shipping a separate white asset.
 
 ### Changing it
