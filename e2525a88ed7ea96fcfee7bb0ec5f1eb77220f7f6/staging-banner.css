@@ -1,56 +1,78 @@
 /*
  * Staging environment banner.
  *
- * Loaded into a non-production deployment so it can never be mistaken for the
- * live site. Edit and push; the change goes live once Pages rebuilds.
+ * A fixed triangle in the bottom-left corner: translucent at rest, fully
+ * opaque on hover, with the hazard stripes drifting underneath.
+ *
+ * Everything is drawn by a single pseudo-element so that one hover target
+ * covers the whole badge. The wordmark and the label are baked into one
+ * self-contained SVG, recoloured white, and pre-rotated to sit parallel to the
+ * hypotenuse; that is also why they are embedded as a data: URI. The consuming
+ * application sends a Content-Security-Policy whose img-src is "self" plus
+ * data:, so an externally hosted image would be blocked by the browser.
+ *
+ * No layout is disturbed: the badge is an overlay and the page keeps its own
+ * geometry.
  */
 
 :root {
-  --hs-staging-height: 26px;
-  --hs-staging-bg: #b45309;
-  --hs-staging-fg: #fff8ec;
+  --hs-stg-size: 155px;
+  --hs-stg-red: #c1121f;
+  --hs-stg-rest: 0.62;
+  --hs-stg-speed: 1.8s;
 }
 
-/* Keep the application's own content clear of the bar. */
-body {
-  padding-top: var(--hs-staging-height) !important;
-}
+html::after {
+  content: "";
 
-/* The bar. pointer-events:none so it can never swallow a click. */
-body::before {
-  content: "STAGING";
   position: fixed;
-  top: 0;
   left: 0;
-  right: 0;
-  height: var(--hs-staging-height);
+  bottom: 0;
+  width: var(--hs-stg-size);
+  height: var(--hs-stg-size);
   z-index: 2147483647;
-  pointer-events: none;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* Hit-testable, otherwise the hover state could never fire. */
+  pointer-events: auto;
+  cursor: help;
 
-  background: repeating-linear-gradient(
-    135deg,
-    var(--hs-staging-bg),
-    var(--hs-staging-bg) 12px,
-    #92400e 12px,
-    #92400e 24px
-  );
-  color: var(--hs-staging-fg);
+  /* Right angle in the corner, hypotenuse running up to the left edge. */
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
 
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.32em;
-  text-indent: 0.32em;
-  line-height: 1;
+  background-color: var(--hs-stg-red);
+  background-image:
+    url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+CiAgPGxpbmUgeDE9Ii02IiB5MT0iNiIgeDI9IjIwNiIgeTI9IjIxOCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utb3BhY2l0eT0iMC41IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDgwLjkxLDExOS4wOSkgcm90YXRlKDQ1KSI+CiAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNzcuODYsLTcuNTApIHNjYWxlKDAuMDU4NTkpIj4KPHBhdGggZD0iTTE1IDE5MC45MDFWNjQuMjE2SDQyLjUxNjJWMTE0LjQ0N0g5OC42NTY2VjY0LjIxNkgxMjYuMTczVjE5MC45MDFIOTguNjU2NlYxMzcuNzE2SDQyLjUxNjJWMTkwLjkwMUgxNVoiIGZpbGw9IiNmZmZmZmYiLz4KPHBhdGggZD0iTTIwOC42MTIgMTkwLjkwMVYxMzkuOTMyTDE1OS40ODkgNjQuMjE2SDE5MS40MzdMMjIyLjgzMiAxMTUuMTg2SDIyMy43NTVMMjU0Ljk2NSA2NC4yMTZIMjg1LjA2NkwyMzYuMzEzIDEzOS45MzJWMTkwLjkwMUgyMDguNjEyWiIgZmlsbD0iI2ZmZmZmZiIvPgo8cGF0aCBkPSJNMzU5LjgxNyAxOTMuMTE3QzM1Mi40MyAxOTMuMTE3IDM0NS40MTIgMTkyLjM3OSAzMzguNzY0IDE5MC45MDFDMzMyLjExNiAxODkuNDI0IDMyNi4yMDYgMTg3LjA4NSAzMjEuMDM1IDE4My44ODRDMzE1Ljk4OCAxODAuNTYgMzExLjk4NiAxNzYuNDM1IDMwOS4wMzIgMTcxLjUxMUMzMDYuMiAxNjYuNDYzIDMwNC43ODQgMTYwLjM2OSAzMDQuNzg0IDE1My4yMjhDMzA0Ljc4NCAxNTIuNjEzIDMwNC43ODQgMTUxLjk5NyAzMDQuNzg0IDE1MS4zODFDMzA0Ljc4NCAxNTAuNjQzIDMwNC44NDYgMTUwLjA4OSAzMDQuOTY5IDE0OS43MTlIMzMyLjNDMzMyLjE3NyAxNTAuMDg5IDMzMi4xMTYgMTUwLjU4MSAzMzIuMTE2IDE1MS4xOTdDMzMyLjExNiAxNTEuODEyIDMzMi4xMTYgMTUyLjM2NiAzMzIuMTE2IDE1Mi44NTlDMzMyLjExNiAxNTYuNzk5IDMzMy4xNjIgMTYwLjEyMyAzMzUuMjU1IDE2Mi44MzFDMzM3LjQ3MSAxNjUuNTQgMzQwLjY3MiAxNjcuNTcxIDM0NC44NTggMTY4LjkyNUMzNDkuMDQ0IDE3MC4yOCAzNTMuOTA3IDE3MC45NTcgMzU5LjQ0NyAxNzAuOTU3QzM2My4wMTggMTcwLjk1NyAzNjYuMTU3IDE3MC43NzIgMzY4Ljg2NiAxNzAuNDAzQzM3MS42OTcgMTY5LjkxIDM3NC4xNTkgMTY5LjI5NSAzNzYuMjUyIDE2OC41NTZDMzc4LjQ2OCAxNjcuNjk0IDM4MC4yNTQgMTY2LjcwOSAzODEuNjA4IDE2NS42MDFDMzgzLjA4NSAxNjQuNDkzIDM4NC4xMzIgMTYzLjIwMSAzODQuNzQ3IDE2MS43MjNDMzg1LjQ4NiAxNjAuMjQ2IDM4NS44NTUgMTU4LjU4NCAzODUuODU1IDE1Ni43MzdDMzg1Ljg1NSAxNTMuNDEzIDM4NC43NDcgMTUwLjcwNCAzODIuNTMxIDE0OC42MTFDMzgwLjQzOCAxNDYuNTE4IDM3Ny40ODQgMTQ0LjczMyAzNzMuNjY3IDE0My4yNTZDMzY5Ljk3NCAxNDEuNzc5IDM2NS43ODggMTQwLjQyNCAzNjEuMTA5IDEzOS4xOTNDMzU2LjQzMSAxMzcuOTYyIDM1MS42MjkgMTM2LjczMSAzNDYuNzA1IDEzNS41QzM0MS43OCAxMzQuMTQ1IDMzNi45NzkgMTMyLjU0NSAzMzIuMyAxMzAuNjk4QzMyNy42MjIgMTI4LjcyOCAzMjMuNDM2IDEyNi4zODkgMzE5Ljc0MyAxMjMuNjgxQzMxNi4wNDkgMTIwLjk3MiAzMTMuMDk0IDExNy41MjUgMzEwLjg3OCAxMTMuMzM5QzMwOC42NjIgMTA5LjE1MyAzMDcuNTU0IDEwNC4xMDUgMzA3LjU1NCA5OC4xOTU4QzMwNy41NTQgOTEuOTE2OSAzMDguODQ3IDg2LjQ5OTkgMzExLjQzMiA4MS45NDQ2QzMxNC4xNDEgNzcuMzg5NCAzMTcuODk2IDczLjYzNDQgMzIyLjY5NyA3MC42Nzk2QzMyNy40OTkgNjcuNzI0OCAzMzMuMDM5IDY1LjU3MDMgMzM5LjMxOCA2NC4yMTYxQzM0NS41OTcgNjIuNzM4NyAzNTIuNDMgNjIgMzU5LjgxNyA2MkMzNjYuNzExIDYyIDM3My4yMzYgNjIuNzM4NyAzNzkuMzkyIDY0LjIxNjFDMzg1LjU0OCA2NS41NzAzIDM5MC45NjUgNjcuNzg2NCAzOTUuNjQzIDcwLjg2NDNDNDAwLjMyMSA3My45NDIyIDQwMy45NTMgNzcuODIwMyA0MDYuNTM5IDgyLjQ5ODZDNDA5LjI0NyA4Ny4xNzcgNDEwLjYwMiA5Mi43MTcyIDQxMC42MDIgOTkuMTE5MlYxMDEuMzM1SDM4My44MjRWOTkuODU3OUMzODMuODI0IDk2LjUzMzcgMzgyLjgzOSA5My43MDIxIDM4MC44NjkgOTEuMzYyOUMzNzguODk5IDg5LjAyMzcgMzc2LjEyOSA4Ny4xNzcgMzcyLjU1OSA4NS44MjI3QzM2OC45ODkgODQuNDY4NSAzNjQuODAzIDgzLjc5MTMgMzYwLjAwMSA4My43OTEzQzM1NC44MyA4My43OTEzIDM1MC4zOTggODQuMjgzOCAzNDYuNzA1IDg1LjI2ODdDMzQzLjEzNCA4Ni4yNTM2IDM0MC4zNjQgODcuNzMxIDMzOC4zOTUgODkuNzAwOUMzMzYuNTQ4IDkxLjU0NzYgMzM1LjYyNCA5My43NjM3IDMzNS42MjQgOTYuMzQ5MUMzMzUuNjI0IDk5LjMwMzggMzM2LjY3MSAxMDEuNzY2IDMzOC43NjQgMTAzLjczNkMzNDAuOTggMTA1LjU4MyAzNDMuOTM1IDEwNy4yNDUgMzQ3LjYyOCAxMDguNzIyQzM1MS40NDUgMTEwLjA3NiAzNTUuNjkyIDExMS4zMDggMzYwLjM3MSAxMTIuNDE2QzM2NS4wNDkgMTEzLjUyNCAzNjkuODUgMTE0Ljc1NSAzNzQuNzc1IDExNi4xMDlDMzc5LjcgMTE3LjQ2MyAzODQuNTAxIDExOS4wNjQgMzg5LjE4IDEyMC45MTFDMzkzLjg1OCAxMjIuNzU3IDM5OC4wNDQgMTI1LjA5NiA0MDEuNzM3IDEyNy45MjhDNDA1LjQzMSAxMzAuNjM3IDQwOC4zODUgMTM0LjAyMiA0MTAuNjAyIDEzOC4wODVDNDEyLjgxOCAxNDIuMTQ4IDQxMy45MjYgMTQ3LjAxMSA0MTMuOTI2IDE1Mi42NzRDNDEzLjkyNiAxNjIuNCA0MTEuNTg2IDE3MC4yMTggNDA2LjkwOCAxNzYuMTI4QzQwMi4yMyAxODIuMDM3IDM5NS44MjggMTg2LjM0NiAzODcuNzAyIDE4OS4wNTVDMzc5LjU3NyAxOTEuNzYzIDM3MC4yODEgMTkzLjExNyAzNTkuODE3IDE5My4xMTdaIiBmaWxsPSIjZmZmZmZmIi8+CjxwYXRoIGQ9Ik01MTAuMTc5IDE5My4xMTdDNDk3LjAwNSAxOTMuMTE3IDQ4NS43NDEgMTkwLjg0IDQ3Ni4zODQgMTg2LjI4NUM0NjcuMDI3IDE4MS42MDYgNDU5Ljg4NiAxNzQuNDA0IDQ1NC45NjIgMTY0LjY3OEM0NTAuMTYgMTU0Ljk1MiA0NDcuNzYgMTQyLjU3OSA0NDcuNzYgMTI3LjU1OUM0NDcuNzYgMTA1LjM5OCA0NTMuMTc3IDg4Ljk2MjIgNDY0LjAxMSA3OC4yNTEyQzQ3NC45NjggNjcuNDE3MSA0OTAuMzU3IDYyIDUxMC4xNzkgNjJDNTIxLjAxMyA2MiA1MzAuNzM5IDYzLjg0NjcgNTM5LjM1NyA2Ny41NDAyQzU0Ny45NzUgNzEuMjMzNiA1NTQuNzQ2IDc2Ljc3MzggNTU5LjY3MSA4NC4xNjA3QzU2NC43MTkgOTEuNTQ3NiA1NjcuMjQzIDEwMC44NDMgNTY3LjI0MyAxMTIuMDQ2SDUzOS41NDJDNTM5LjU0MiAxMDYuMTM3IDUzOC4zMTEgMTAxLjE1MSA1MzUuODQ4IDk3LjA4NzhDNTMzLjUwOSA5My4wMjUgNTMwLjEyMyA4OS45NDcxIDUyNS42OTEgODcuODU0MUM1MjEuMzgyIDg1LjYzODEgNTE2LjMzNSA4NC41MyA1MTAuNTQ4IDg0LjUzQzUwMi42NjkgODQuNTMgNDk2LjE0NCA4Ni4wNjkgNDkwLjk3MyA4OS4xNDY5QzQ4NS45MjUgOTIuMjI0NyA0ODIuMTcgOTYuNzggNDc5LjcwOCAxMDIuODEzQzQ3Ny4zNjkgMTA4LjcyMiA0NzYuMTk5IDExNS45ODYgNDc2LjE5OSAxMjQuNjA0VjEzMC4zMjlDNDc2LjE5OSAxMzkuMTkzIDQ3Ny40MyAxNDYuNjQyIDQ3OS44OTMgMTUyLjY3NEM0ODIuMzU1IDE1OC41ODQgNDg2LjA0OCAxNjMuMDc3IDQ5MC45NzMgMTY2LjE1NUM0OTYuMDIxIDE2OS4xMSA1MDIuNDg0IDE3MC41ODcgNTEwLjM2MyAxNzAuNTg3QzUxNi41MTkgMTcwLjU4NyA1MjEuODc1IDE2OS41NDEgNTI2LjQzIDE2Ny40NDhDNTMwLjk4NSAxNjUuMzU1IDUzNC40OTQgMTYyLjI3NyA1MzYuOTU2IDE1OC4yMTRDNTM5LjQxOSAxNTQuMTUyIDU0MC42NSAxNDkuMTY1IDU0MC42NSAxNDMuMjU2SDU2Ny4yNDNDNTY3LjI0MyAxNTQuNDU5IDU2NC43OCAxNjMuNzU1IDU1OS44NTYgMTcxLjE0MUM1NTUuMDU0IDE3OC41MjggNTQ4LjM0NCAxODQuMDY4IDUzOS43MjYgMTg3Ljc2MkM1MzEuMTA4IDE5MS4zMzIgNTIxLjI1OSAxOTMuMTE3IDUxMC4xNzkgMTkzLjExN1oiIGZpbGw9IiNmZmZmZmYiLz4KPHBhdGggZD0iTTY0MS42NjQgNjQuMjE2TDU5Mi45MTEgMTkwLjkwMUg2MjEuMzVMNjMwLjM5OSAxNjUuOTcxSDYzMC40MDJMNjM4LjM0MyAxNDMuODFINjM4LjM0TDY0OS42MDUgMTEyLjZDNjUwLjIyMSAxMTAuNzU0IDY1MS4wMjEgMTA4LjQxNCA2NTIuMDA2IDEwNS41ODNDNjUyLjk5MSAxMDIuNjI4IDY1My45NzYgOTkuNjExNiA2NTQuOTYxIDk2LjUzMzdDNjU1Ljk0NSA5My4zMzI3IDY1Ni43NDYgOTAuNTYyNyA2NTcuMzYxIDg4LjIyMzVINjU4LjQ2OUM2NTkuMDg1IDkwLjA3MDIgNjU5LjcwMSA5Mi4xNjMyIDY2MC4zMTYgOTQuNTAyM0M2NjEuMDU1IDk2LjcxODQgNjYxLjc5MyA5OC45OTYgNjYyLjUzMiAxMDEuMzM1QzY2My4yNzEgMTAzLjY3NCA2NjMuOTQ4IDEwNS44MjkgNjY0LjU2NCAxMDcuNzk5QzY2NS4zMDIgMTA5LjY0NSA2NjUuOTE4IDExMS4yNDYgNjY2LjQxIDExMi42TDY3Ny40NzUgMTQzLjI1NUg2NzcuNDc5TDY4NS42MyAxNjYuMDA1TDY5NC42NjUgMTkwLjkwMUg3MjQuMzk3TDY3NS42NDQgNjQuMjE2SDY0MS42NjRaIiBmaWxsPSIjZmZmZmZmIi8+CjxwYXRoIGQ9Ik03NTcuMTA5IDE5MC45MDFWNjQuMjE2SDc4NC42MjVWMTY3LjQ0OEg4NDguNTIyVjE5MC45MDFINzU3LjEwOVoiIGZpbGw9IiNmZmZmZmYiLz4KPHBhdGggZD0iTTEwOTkuNCA2NC4yMTZWMTkwLjkwMUgxMTI2LjkxVjE0NC43MzNIMTEyNi45M1YxMjIuOTQySDExMjYuOTFWODYuNTYxNEgxMTY1LjE0QzExNjguOTYgODYuNTYxNCAxMTcyLjE2IDg3LjIzODYgMTE3NC43NCA4OC41OTI4QzExNzcuMzMgODkuOTQ3MSAxMTc5LjMgOTEuOTc4NSAxMTgwLjY1IDk0LjY4N0MxMTgyLjAxIDk3LjI3MjQgMTE4Mi42OCAxMDAuNDEyIDExODIuNjggMTA0LjEwNUMxMTgyLjY4IDEwOS44OTIgMTE4MS4xNCAxMTQuNTA5IDExNzguMDcgMTE3Ljk1NkMxMTc0Ljk5IDEyMS4yOCAxMTcwLjY4IDEyMi45NDIgMTE2NS4xNCAxMjIuOTQySDExMzkuNDNWMTQ0LjczM0gxMTYyLjE4TDExODQuNTMgMTkwLjkwMUgxMjE1TDExODkuMTUgMTQwLjExNkMxMTk2LjE2IDEzNi43OTIgMTIwMS41MiAxMzEuOTkxIDEyMDUuMjEgMTI1LjcxMkMxMjA4LjkxIDExOS4zMSAxMjEwLjc1IDExMS45ODUgMTIxMC43NSAxMDMuNzM2QzEyMTAuNzUgOTUuOTc5NyAxMjA5LjIxIDg5LjE0NjggMTIwNi4xNCA4My4yMzczQzEyMDMuMDYgNzcuMjA0NyAxMTk4LjM4IDcyLjUyNjMgMTE5Mi4xIDY5LjIwMjJDMTE4NS45NCA2NS44NzgxIDExNzguMTkgNjQuMjE2IDExNjguODMgNjQuMjE2SDEwOTkuNFoiIGZpbGw9IiNmZmZmZmYiLz4KPHBhdGggZD0iTTEwMzguMTcgMTE1LjQ3NEg5MTcuNDJWMTQwLjIyNUgxMDM4LjE3VjExNS40NzRaIiBmaWxsPSIjZmZmZmZmIi8+CjxwYXRoIGQ9Ik0xMDc2Ljk1IDY0LjI1NDFIOTYzLjI1Vjg5LjAwNTZIMTA3Ni45NVY2NC4yNTQxWiIgZmlsbD0iI2ZmZmZmZiIvPgo8cGF0aCBkPSJNOTkyLjAwOCAxNjYuNjQ2SDg3MS4yNTVWMTkxLjM5OEg5OTIuMDA4VjE2Ni42NDZaIiBmaWxsPSIjZmZmZmZmIi8+CiAgICA8L2c+CiAgICA8dGV4dCB4PSI2LjE2IiB5PSIwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0idWktbW9ub3NwYWNlLCBTRk1vbm8tUmVndWxhciwgTWVubG8sIENvbnNvbGFzLCBtb25vc3BhY2UiIGZvbnQtc2l6ZT0iMTIuNSIgZm9udC13ZWlnaHQ9IjcwMCIgbGV0dGVyLXNwYWNpbmc9IjMuMiIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiPlNUQUdJTkc8L3RleHQ+CiAgPC9nPgo8L3N2Zz4="),
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.20) 25%, transparent 25%,
+      transparent 50%, rgba(255, 255, 255, 0.20) 50%,
+      rgba(255, 255, 255, 0.20) 75%, transparent 75%, transparent
+    );
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, 56px 56px;
+  background-position: 0 0, 0 0;
 
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  opacity: var(--hs-stg-rest);
+  transition: opacity 0.18s ease-out;
+  animation: hs-stg-drift var(--hs-stg-speed) linear infinite;
+
+  will-change: opacity;
+}
+
+html::after:hover {
+  opacity: 1;
+}
+
+/* Only the stripe layer travels; the label layer is pinned in both keyframes. */
+@keyframes hs-stg-drift {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 0, 56px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html::after { animation: none; }
 }
 
 @media print {
-  body { padding-top: 0 !important; }
-  body::before { display: none; }
+  html::after { display: none; }
 }
